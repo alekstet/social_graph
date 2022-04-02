@@ -2,6 +2,8 @@ package conf
 
 import (
 	"io/ioutil"
+	"path"
+	"runtime"
 
 	"github.com/olebedev/config"
 )
@@ -16,7 +18,10 @@ type Conf struct {
 }
 
 func Cnf() (*Conf, error) {
-	file, err := ioutil.ReadFile("github.com/alekstet/social_graph/conf/cnf.yml")
+	_, filename, _, _ := runtime.Caller(0)
+	path_conf := path.Join(path.Dir(filename), "../conf/cnf.yml")
+
+	file, err := ioutil.ReadFile(path_conf)
 	if err != nil {
 		return nil, err
 	}

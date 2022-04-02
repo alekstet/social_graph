@@ -6,13 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	cnf "github.com/alekstet/social_graph/conf"
+	"github.com/alekstet/social_graph/conf"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSocial(t *testing.T) {
-	params, err := cnf.Cnf()
+	params, err := conf.Cnf()
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -26,11 +26,21 @@ func TestSocial(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 
-	m := [][]int{{0, 2, 1}, {2, 0, 0}, {1, 0, 0}}
-	i := Info{2, 1, 1.5}
-	r := Resp{m, i}
-	js, _ := json.Marshal(r)
-	handler := http.HandlerFunc(s.S)
+	matrix := [][]int{{0, 2, 1}, {2, 0, 0}, {1, 0, 0}}
+	info := Info{2, 1, 1.5}
+	r := Resp{matrix, info}
+	expected, err := json.Marshal(r)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	handler := http.HandlerFunc(s.Social)
+
+	t.Run("PUT empty data", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("PUT", "/social", nil)
+		handler.ServeHTTP(w, r)
+		assert.Equal(t, 400, w.Result().StatusCode)
+	})
 
 	t.Run("PUT negative data", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -42,13 +52,6 @@ func TestSocial(t *testing.T) {
 	t.Run("PUT equal data", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("PUT", "/social?from=1&to=1", nil)
-		handler.ServeHTTP(w, r)
-		assert.Equal(t, 400, w.Result().StatusCode)
-	})
-
-	t.Run("PUT empty data", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest("PUT", "/social", nil)
 		handler.ServeHTTP(w, r)
 		assert.Equal(t, 400, w.Result().StatusCode)
 	})
@@ -78,6 +81,6 @@ func TestSocial(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/social", nil)
 		handler.ServeHTTP(w, r)
-		assert.Equal(t, js, w.Body.Bytes())
+		assert.Equal(t, expected, w.Body.Bytes())
 	})
 }
