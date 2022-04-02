@@ -9,18 +9,21 @@ import (
 	"strconv"
 
 	"github.com/alekstet/social_graph/conf"
+	"github.com/julienschmidt/httprouter"
 
 	_ "github.com/lib/pq"
 )
 
 type Store struct {
-	conf conf.Conf
-	db   *sql.DB
+	conf   conf.Conf
+	router *httprouter.Router
+	db     *sql.DB
 }
 
 func New(config *conf.Conf) *Store {
 	return &Store{
-		conf: *config,
+		conf:   *config,
+		router: httprouter.New(),
 	}
 }
 
@@ -35,7 +38,7 @@ type Info struct {
 	Avg float32 `json:"avg"`
 }
 
-func (s *Store) Get() ([]byte, error) {
+func (s *Store) GetFromDB() ([]byte, error) {
 	journal_soc := [][3]int{}
 	var min, max, max_to, max_from, max_node int
 
@@ -102,36 +105,38 @@ func Solve(max_node, min, max int, journal_soc [][3]int) Resp {
 	return resp
 }
 
-func (s *Store) Social(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		res, err := s.Get()
+func (s *Store) GetMatrix(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	res, err := s.GetFromDB()
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	} else {
+		w.Write(res)
+	}
+}
+
+func (s *Store) PutData(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	from, err := strconv.Atoi(r.URL.Query().Get("from"))
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+	to, err := strconv.Atoi(r.URL.Query().Get("to"))
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+	if from == to {
+		w.WriteHeader(400)
+		return
+	} else if from <= 0 || to <= 0 {
+		w.WriteHeader(400)
+		return
+	} else {
+		_, err := s.db.Exec("INSERT INTO public.social (p_from, p_to) VALUES ($1, $2)", from, to)
 		if err != nil {
 			w.WriteHeader(500)
-		} else {
-			w.Write(res)
-		}
-	case "PUT":
-		from, err := strconv.Atoi(r.URL.Query().Get("from"))
-		if err != nil {
-			w.WriteHeader(400)
 			return
-		}
-		to, err := strconv.Atoi(r.URL.Query().Get("to"))
-		if err != nil {
-			w.WriteHeader(400)
-			return
-		}
-		if from == to {
-			w.WriteHeader(400)
-		} else if from <= 0 || to <= 0 {
-			w.WriteHeader(400)
-		} else {
-			_, err := s.db.Exec("INSERT INTO public.social (p_from, p_to) VALUES ($1, $2)", from, to)
-			if err != nil {
-				w.WriteHeader(500)
-				return
-			}
 		}
 	}
 }
@@ -167,9 +172,11 @@ func main() {
 		log.Fatalf("error with db: %s", err)
 	}
 	defer s.db.Close()
-	http.HandleFunc("/social", s.Social)
 
-	err = http.ListenAndServe(conf.PortApp, nil)
+	s.router.GET("/social", s.GetMatrix)
+	s.router.PUT("/social", s.PutData)
+
+	err = http.ListenAndServe(conf.PortApp, s.router)
 	if err != nil {
 		log.Fatalf("error with serve: %s", err)
 	}
