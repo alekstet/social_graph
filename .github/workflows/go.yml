@@ -19,7 +19,7 @@ jobs:
         go-version: 1.18
         
     - name: TestDB
-      run: script.sh
+      run: ./.github/workflows/script.sh.
       shell: bash
 
     - name: Build
