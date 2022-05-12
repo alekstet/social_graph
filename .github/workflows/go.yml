@@ -19,7 +19,8 @@ jobs:
         go-version: 1.18
         
     - name: TestDB
-      run: "${GITHUB_ACTION_PATH}/script.sh"
+      run: |
+        echo "hello"
       shell: bash
 
     - name: Build
