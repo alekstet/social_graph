@@ -20,7 +20,8 @@ jobs:
         
     - name: TestDB
       run: |
-        echo "hello"
+        echo "check psql"
+        postgres --version
       shell: bash
 
     - name: Build
