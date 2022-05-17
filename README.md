@@ -1,4 +1,4 @@
-# social_graph [![Build Status](https://github.com/alekstet/social_graph/actions/workflows/easyjson.yml/badge.svg)]
+# social_graph [![Build Status](https://github.com/alekstet/social_graph/actions/workflows/go.yml/badge.svg)]
 
 # Сервис социальный связей
 
