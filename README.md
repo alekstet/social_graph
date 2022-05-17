@@ -1,7 +1,5 @@
 # social_graph [![Build Status](https://github.com/alekstet/social_graph/actions/workflows/go.yml/badge.svg)]
 
-# Сервис социальный связей
-
 Сервис обрабатывает 2 метода:
 1. PUT /social?from=1&to=2; В ответе пустое тело + статус 200 (ok). В случае пустых параметров, отрицательных, нулевых, равных - пустое тело + статус 500 (internal server error);
 2. GET /social;  При наличие как минимум одной валидной коммуникации получаем:
