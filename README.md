@@ -1,3 +1,5 @@
+# social_graph [![Build Status](https://github.com/alekstet/social_graph/actions/workflows/easyjson.yml/badge.svg)]
+
 # Сервис социальный связей
 
 Сервис обрабатывает 2 метода:
