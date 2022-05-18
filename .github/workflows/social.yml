@@ -1,4 +1,4 @@
-name: social_graph
+name: social
 
 on:
   push:
